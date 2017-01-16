@@ -82,4 +82,14 @@ app.use(function (err, req, res, next) {
     });
 });
 
+// Secure traffic only
+app.all('*', function (req, res, next) {
+    console.log('req start: ', req.secure, req.hostname, req.url, app.get('port'));
+    if (req.secure) {
+        return next();
+    }
+
+    res.redirect('https://' + req.hostname + ':' + app.get('secPort') + req.url);
+});
+
 module.exports = app;
