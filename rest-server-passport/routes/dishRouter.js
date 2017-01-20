@@ -11,7 +11,8 @@ var dishRouter = express.Router();
 dishRouter.use(bodyParser.json());
 
 dishRouter.route('/')
-    .get(Verify.verifyOrdinaryUser, function (req, res, next) {
+    .all(Verify.verifyOrdinaryUser)
+    .get(function (req, res, next) {
         Dishes.find({})
             .populate('comments.postedBy')
             .exec(function (err, dish) {
@@ -20,7 +21,7 @@ dishRouter.route('/')
             });
     })
 
-    .post(Verify.verifyOrdinaryUser, Verify.verifyAdmin, function (req, res, next) {
+    .post(Verify.verifyAdmin, function (req, res, next) {
         Dishes.create(req.body, function (err, dish) {
             if (err) throw err;
             console.log('Dish created!');
@@ -33,7 +34,7 @@ dishRouter.route('/')
         });
     })
 
-    .delete(Verify.verifyOrdinaryUser, Verify.verifyAdmin, function (req, res, next) {
+    .delete(Verify.verifyAdmin, function (req, res, next) {
         Dishes.remove({}, function (err, resp) {
             if (err) throw err;
             res.json(resp);
@@ -41,7 +42,8 @@ dishRouter.route('/')
     });
 
 dishRouter.route('/:dishId')
-    .get(Verify.verifyOrdinaryUser, function (req, res, next) {
+    .all(Verify.verifyOrdinaryUser)
+    .get(function (req, res, next) {
         Dishes.findById(req.params.dishId)
             .populate('comments.postedBy')
             .exec(function (err, dish) {
@@ -50,7 +52,7 @@ dishRouter.route('/:dishId')
             });
     })
 
-    .put(Verify.verifyOrdinaryUser, Verify.verifyAdmin, function (req, res, next) {
+    .put(Verify.verifyAdmin, function (req, res, next) {
         Dishes.findByIdAndUpdate(req.params.dishId, {
             $set: req.body
         }, {
@@ -61,7 +63,7 @@ dishRouter.route('/:dishId')
         });
     })
 
-    .delete(Verify.verifyOrdinaryUser, Verify.verifyAdmin, function (req, res, next) {
+    .delete(Verify.verifyAdmin, function (req, res, next) {
         Dishes.findByIdAndRemove(req.params.dishId, function (err, resp) {
             if (err) throw err;
             res.json(resp);
