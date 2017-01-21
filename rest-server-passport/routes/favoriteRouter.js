@@ -11,9 +11,11 @@ var favRouter = express.Router();
 favRouter.use(bodyParser.json());
 
 favRouter.route('/')
-    .all(Verify.verifyOrdinaryUser)
+    .all(Verify.verifyOrdinaryUser) // req.decoded._doc._id is available after verifyOrdinaryUser
     .get(function (req, res, next) {
-        Favorites.find({})
+        var uID = req.decoded._doc._id;
+
+        Favorites.findOne({postedBy: uID})
             .populate('postedBy')
             .populate('dishes')
             .exec(function (err, fav) {
@@ -24,56 +26,59 @@ favRouter.route('/')
 
     .post(function (req, res, next) {
         // check existence of Favorites
-        // req.decoded._doc._id is available after verifyOrdinaryUser
-        Favorites.find({postedBy: req.decoded._doc._id}, function (err, result) {
+        var uID = req.decoded._doc._id;
+        Favorites.findOne({postedBy: uID}, function (err, result) {
             if (err) throw err;
-            
-            if (result.length) { // fav exists, append
-                req.body.postedBy = req.decoded._doc._id;
-                result.dishes.push(req._id);
+
+            if (result) { // fav exists, append
+                result.dishes.push(req.body._id);
                 result.save(function (err, fav) {
                     if (err) throw err;
-                    console.log('Favorite dish added!');
+
                     res.json(fav);
                 });
             } else {
-                Favorites.create(req.body, function (err, fav) {
+                Favorites.create({postedBy: uID, dishes: [req.body._id]}, function (err, fav) {
                     if (err) throw err;
-                    console.log('Dish added to favorites!');
-        
-                    res.writeHead(200, {
-                        'Content-Type': 'text/plain'
-                    });
-                    res.end('Added to favorites dish with id: ' + fav._id);
+
+                    res.json(fav);
                 });
             }
+            console.log('Favorite dish added!');
         });
-        
+
     })
 
     .delete(function (req, res, next) {
-        Favorites.remove({}, function (err, resp) {
+        var uID = req.decoded._doc._id;
+        Favorites.remove({postedBy: uID}, function (err, resp) {
             if (err) throw err;
-            res.json(resp);
+            res.writeHead(200, {
+                'Content-Type': 'text/plain'
+            });
+            res.end('Favorites removed!');
         });
     });
 
 favRouter.route('/:dishObjId')
     .all(Verify.verifyOrdinaryUser)
-
     .delete(function (req, res, next) {
-        Favorites.find({postedBy: req.decoded._doc._id}, function (err, resp) {
+        var uID = req.decoded._doc._id;
+        Favorites.findOne({postedBy: uID}, function (err, resp) {
             if (err) throw err;
-            
-            resp.dishes.id(resp.params.dishObjId).remove();
+            if (resp) {
+                resp.dishes.remove(req.params.dishObjId);
 
-            resp.save(function (err, result) {
-                if (err) throw err;
+                resp.save(function (err, result) {
+                    if (err) throw err;
+                    res.json(result);
+                });
+            } else {
                 res.writeHead(200, {
                     'Content-Type': 'text/plain'
                 });
-                res.end('Fav dish removed!');
-            });
+                res.end('Fav dish doesn\'t exist!');
+            }
         });
     });
 

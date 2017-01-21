@@ -8,6 +8,7 @@ module.exports = {
     'facebook': {
         clientID: '1769837316671991',
         clientSecret: '2d696de362dbf29a1a1860a3c36c85aa',
-        callbackURL: 'https://' + process.env.IP + ':' + process.env.PORT + '/users/facebook/callback' // localhost:3443
+        callbackURL: 'https://localhost:3443/users/facebook/callback' // localhost:3443
+        //callbackURL: 'https://' + process.env.IP + ':' + process.env.PORT + '/users/facebook/callback' // localhost:3443
     }
 }
